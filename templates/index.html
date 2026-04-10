@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>🪙 Crypto Analytics Dashboard</h1>
+        <button id="refreshBtn" onclick="refreshData()">🔄 Refresh Data</button>
+        <p id="statusMsg"></p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="cards-container">
+        <div class="card">
+            <h3>Total Coins</h3>
+            <p id="totalCoins">-</p>
+        </div>
+        <div class="card bullish">
+            <h3>🟢 Bullish</h3>
+            <p id="bullishCount">-</p>
+        </div>
+        <div class="card bearish">
+            <h3>🔴 Bearish</h3>
+            <p id="bearishCount">-</p>
+        </div>
+        <div class="card neutral">
+            <h3>🟡 Neutral</h3>
+            <p id="neutralCount">-</p>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="charts-row">
+        <div class="chart-box">
+            <h2>Momentum Distribution</h2>
+            <canvas id="momentumChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <h2>Price Change % (24h)</h2>
+            <canvas id="priceChangeChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="charts-row">
+        <div class="chart-box">
+            <h2>Volatility Scores</h2>
+            <canvas id="volatilityChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <h2>Volume / Market Cap Ratio</h2>
+            <canvas id="volumeRatioChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Coins Table -->
+    <div class="table-container">
+        <h2>📋 All Coins</h2>
+        <table id="coinsTable">
+            <thead>
+                <tr>
+                    <th>Coin</th>
+                    <th>Price (USD)</th>
+                    <th>24h Change %</th>
+                    <th>7d Change %</th>
+                    <th>Moving Avg (7d)</th>
+                    <th>Volatility</th>
+                    <th>Vol/MCap Ratio</th>
+                    <th>Momentum</th>
+                    <th>Fear Index</th>
+                </tr>
+            </thead>
+            <tbody id="coinsBody">
+                <tr><td colspan="9">Click Refresh to load data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let momentumChart, priceChangeChart, volatilityChart, volumeRatioChart;
+
+        // Load coins on page load
+        window.onload = () => loadCoins();
+
+        async function refreshData() {
+            const btn = document.getElementById("refreshBtn");
+            const msg = document.getElementById("statusMsg");
+            btn.disabled = true;
+            btn.innerText = "⏳ Refreshing...";
+            msg.innerText = "";
+
+            try {
+                const res = await fetch("/api/refresh", { method: "POST" });
+                const data = await res.json();
+                msg.innerText = data.message;
+                msg.style.color = data.status === "success" ? "lightgreen" : "red";
+                await loadCoins();
+            } catch (err) {
+                msg.innerText = "❌ Error refreshing data";
+                msg.style.color = "red";
+            }
+
+            btn.disabled = false;
+            btn.innerText = "🔄 Refresh Data";
+        }
+
+        async function loadCoins() {
+            try {
+                const res = await fetch("/api/coins");
+                const data = await res.json();
+                if (data.status === "success") {
+                    renderTable(data.data);
+                    renderCharts(data.data);
+                    renderCards(data.data);
+                }
+            } catch (err) {
+                console.error("Error loading coins:", err);
+            }
+        }
+
+        function renderCards(coins) {
+            document.getElementById("totalCoins").innerText = coins.length;
+            document.getElementById("bullishCount").innerText = coins.filter(c => c.momentum_label === "Bullish").length;
+            document.getElementById("bearishCount").innerText = coins.filter(c => c.momentum_label === "Bearish").length;
+            document.getElementById("neutralCount").innerText = coins.filter(c => c.momentum_label === "Neutral").length;
+        }
+
+        function renderTable(coins) {
+            const tbody = document.getElementById("coinsBody");
+            tbody.innerHTML = "";
+            coins.forEach(coin => {
+                const row = document.createElement("tr");
+                const momentumClass = coin.momentum_label === "Bullish" ? "bullish-label" :
+                                      coin.momentum_label === "Bearish" ? "bearish-label" : "neutral-label";
+                const fearClass = coin.fear_index === "Fear" ? "bearish-label" : "bullish-label";
+                row.innerHTML = `
+                    <td><strong>${coin.name}</strong> (${coin.symbol?.toUpperCase()})</td>
+                    <td>$${coin.current_price?.toLocaleString()}</td>
+                    <td style="color:${coin.price_change_7d > 0 ? 'lightgreen' : 'salmon'}">
+                        ${coin.price_change_7d?.toFixed(2)}%
+                    </td>
+                    <td style="color:${coin.price_change_24h_pct > 0 ? 'lightgreen' : 'salmon'}">
+                        ${coin.price_change_24h_pct?.toFixed(2)}%
+                    </td>
+                    <td>$${coin.moving_average_7d?.toLocaleString()}</td>
+                    <td>${coin.volatility_score}</td>
+                    <td>${coin.volume_market_cap_ratio}</td>
+                    <td><span class="badge ${momentumClass}">${coin.momentum_label}</span></td>
+                    <td><span class="badge ${fearClass}">${coin.fear_index}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderCharts(coins) {
+            const names = coins.map(c => c.symbol?.toUpperCase());
+
+            // Momentum Pie Chart
+            const momentumCounts = {
+                Bullish: coins.filter(c => c.momentum_label === "Bullish").length,
+                Bearish: coins.filter(c => c.momentum_label === "Bearish").length,
+                Neutral: coins.filter(c => c.momentum_label === "Neutral").length
+            };
+            if (momentumChart) momentumChart.destroy();
+            momentumChart = new Chart(document.getElementById("momentumChart"), {
+                type: "doughnut",
+                data: {
+                    labels: ["Bullish", "Bearish", "Neutral"],
+                    datasets: [{
+                        data: Object.values(momentumCounts),
+                        backgroundColor: ["#4caf50", "#f44336", "#ff9800"]
+                    }]
+                }
+            });
+
+            // Price Change Bar Chart
+            const priceChanges = coins.map(c => c.price_change_7d?.toFixed(2));
+            const barColors = priceChanges.map(v => v > 0 ? "#4caf50" : "#f44336");
+            if (priceChangeChart) priceChangeChart.destroy();
+            priceChangeChart = new Chart(document.getElementById("priceChangeChart"), {
+                type: "bar",
+                data: {
+                    labels: names,
+                    datasets: [{
+                        label: "24h Price Change %",
+                        data: priceChanges,
+                        backgroundColor: barColors
+                    }]
+                },
+                options: { indexAxis: "y" }
+            });
+
+            // Volatility Chart
+            if (volatilityChart) volatilityChart.destroy();
+            volatilityChart = new Chart(document.getElementById("volatilityChart"), {
+                type: "bar",
+                data: {
+                    labels: names,
+                    datasets: [{
+                        label: "Volatility Score",
+                        data: coins.map(c => c.volatility_score),
+                        backgroundColor: "#9c27b0"
+                    }]
+                }
+            });
+
+            // Volume/MarketCap Ratio Chart
+            if (volumeRatioChart) volumeRatioChart.destroy();
+            volumeRatioChart = new Chart(document.getElementById("volumeRatioChart"), {
+                type: "bar",
+                data: {
+                    labels: names,
+                    datasets: [{
+                        label: "Volume/MarketCap Ratio",
+                        data: coins.map(c => c.volume_market_cap_ratio),
+                        backgroundColor: "#2196f3"
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>

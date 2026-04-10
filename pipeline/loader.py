@@ -1,13 +1,19 @@
+# pipeline/loader.py
+
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from datetime import datetime
 
-
+# Load environment variables from .env file
 load_dotenv()
 
 def get_database():
+    """
+    Connect to MongoDB Atlas and return database
+    """
     mongo_url = os.getenv("MONGO_URL")
-
+    
     if not mongo_url:
         raise ValueError("MONGO_URL not found in .env file")
     
@@ -15,3 +21,57 @@ def get_database():
     db = client["crypto_pipeline"]
     print("Connected to MongoDB successfully")
     return db
+
+
+def save_raw_coins(coins):
+    """
+    Save raw CoinGecko data into raw_prices collection
+    """
+    db = get_database()
+    collection = db["raw_prices"]
+
+    # Add timestamp to each coin
+    for coin in coins:
+        coin["fetched_at"] = datetime.utcnow().isoformat()
+
+    # Clear old data and insert fresh
+    collection.delete_many({})
+    collection.insert_many(coins)
+    print(f" Saved {len(coins)} raw coins to MongoDB")
+
+
+def save_processed_coins(coins):
+    """
+    Save transformed/enriched coin data into processed_coins collection
+    """
+    db = get_database()
+    collection = db["processed_coins"]
+
+    # Clear old data and insert fresh
+    collection.delete_many({})
+    collection.insert_many(coins)
+    print(f"Saved {len(coins)} processed coins to MongoDB")
+
+
+def get_processed_coins():
+    """
+    Retrieve all processed coins from MongoDB
+    Returns list of coin dictionaries
+    """
+    db = get_database()
+    collection = db["processed_coins"]
+
+    # Exclude MongoDB _id field
+    coins = list(collection.find({}, {"_id": 0}))
+    print(f"Retrieved {len(coins)} coins from MongoDB")
+    return coins
+
+
+def get_coin_by_id(coin_id):
+    """
+    Retrieve a single coin by its id
+    """
+    db = get_database()
+    collection = db["processed_coins"]
+    coin = collection.find_one({"id": coin_id}, {"_id": 0})
+    return coin
