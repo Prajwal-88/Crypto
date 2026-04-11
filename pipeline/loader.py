@@ -31,11 +31,13 @@ def save_raw_coins(coins):
     collection = db["raw_prices"]
 
     # Add timestamp to each coin
+    timestamp = datetime.utcnow().isoformat()
     for coin in coins:
-        coin["fetched_at"] = datetime.utcnow().isoformat()
+        coin["fetched_at"] = timestamp
 
     # Clear old data and insert fresh
-    collection.delete_many({})
+    
+    #collection.delete_many({})
     collection.insert_many(coins)
     print(f" Saved {len(coins)} raw coins to MongoDB")
 
@@ -47,8 +49,11 @@ def save_processed_coins(coins):
     db = get_database()
     collection = db["processed_coins"]
 
+    timestamp = datetime.utcnow().isoformat()
+    for coin in coins:
+        coin["saved_at"] = timestamp
     # Clear old data and insert fresh
-    collection.delete_many({})
+    #collection.delete_many({})
     collection.insert_many(coins)
     print(f"Saved {len(coins)} processed coins to MongoDB")
 
@@ -61,9 +66,25 @@ def get_processed_coins():
     db = get_database()
     collection = db["processed_coins"]
 
+    # Get the latest timestamp
+    latest = collection.find_one(
+        {},
+        sort=[("saved_at", -1)]
+    )
+
+    if not latest:
+        return []
+    
+    # Get all coins from that latest timestamp
+    latest_time = latest["saved_at"]
+    coins = list(collection.find(
+        {"saved_at": latest_time},
+        {"_id": 0}
+    ))
+
     # Exclude MongoDB _id field
-    coins = list(collection.find({}, {"_id": 0}))
-    print(f"Retrieved {len(coins)} coins from MongoDB")
+    #coins = list(collection.find({}, {"_id": 0}))
+    print(f"Retrieved {len(coins)} latest coins from MongoDB")
     return coins
 
 
@@ -73,5 +94,12 @@ def get_coin_by_id(coin_id):
     """
     db = get_database()
     collection = db["processed_coins"]
-    coin = collection.find_one({"id": coin_id}, {"_id": 0})
+
+    # Get most recent record for this coin
+    coin = collection.find_one(
+        {"id": coin_id},
+        sort=[("saved_at", -1)],
+        projection={"_id": 0}
+    )
     return coin
+
