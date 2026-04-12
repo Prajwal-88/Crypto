@@ -122,13 +122,19 @@ def get_coin_by_id(coin_id):
     Retrieve a single coin by its id
     """
     db = get_database()
-    collection = db["processed_coins"]
+    if db is None:
+        return None
+    
+    try:
+        collection = db["processed_coins"]
 
-    # Get most recent record for this coin
-    coin = collection.find_one(
-        {"id": coin_id},
-        sort=[("saved_at", -1)],
-        projection={"_id": 0}
-    )
-    return coin
-
+        # Get most recent record for this coin
+        coin = collection.find_one(
+            {"id": coin_id},
+            sort=[("saved_at", -1)],
+            projection={"_id": 0}
+        )
+        return coin
+    except Exception as e:
+        print(f"Error retrieving coin {coin_id}: {str(e)}")
+        return None
