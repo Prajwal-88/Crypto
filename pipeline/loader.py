@@ -1,4 +1,3 @@
-# pipeline/loader.py
 
 import os
 from pymongo import MongoClient
@@ -36,19 +35,26 @@ def save_raw_coins(coins):
     Save raw CoinGecko data into raw_prices collection
     """
     db = get_database()
-    collection = db["raw_prices"]
-
-    # Add timestamp to each coin
-    timestamp = datetime.utcnow().isoformat()
-    for coin in coins:
-        coin["fetched_at"] = timestamp
-
-    # Clear old data and insert fresh
+    if db is None:
+        print("Skipping save no database connection")
+        return
     
-    #collection.delete_many({})
-    collection.insert_many(coins)
-    print(f" Saved {len(coins)} raw coins to MongoDB")
+    try:
+        collection = db["raw_prices"]
 
+        # Add timestamp to each coin
+        timestamp = datetime.utcnow().isoformat()
+        for coin in coins:
+            coin["fetched_at"] = timestamp
+
+        # Clear old data and insert fresh
+        
+        #collection.delete_many({})
+        collection.insert_many(coins)
+        print(f" Saved {len(coins)} raw coins to MongoDB")
+
+    except Exception as e:
+        print(f"Error saving raw coins: {str(e)}")
 
 def save_processed_coins(coins):
     """
