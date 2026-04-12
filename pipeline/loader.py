@@ -85,29 +85,37 @@ def get_processed_coins():
     Returns list of coin dictionaries
     """
     db = get_database()
-    collection = db["processed_coins"]
-
-    # Get the latest timestamp
-    latest = collection.find_one(
-        {},
-        sort=[("saved_at", -1)]
-    )
-
-    if not latest:
+    if db is None:
+        print("Skipping retrieve no database connection")
         return []
     
-    # Get all coins from that latest timestamp
-    latest_time = latest["saved_at"]
-    coins = list(collection.find(
-        {"saved_at": latest_time},
-        {"_id": 0}
-    ))
+    try:
+        collection = db["processed_coins"]
 
-    # Exclude MongoDB _id field
-    #coins = list(collection.find({}, {"_id": 0}))
-    print(f"Retrieved {len(coins)} latest coins from MongoDB")
-    return coins
+        # Get the latest timestamp
+        latest = collection.find_one(
+            {},
+            sort=[("saved_at", -1)]
+        )
 
+        if not latest:
+            return []
+        
+        # Get all coins from that latest timestamp
+        latest_time = latest["saved_at"]
+        coins = list(collection.find(
+            {"saved_at": latest_time},
+            {"_id": 0}
+        ))
+
+        # Exclude MongoDB _id field
+        #coins = list(collection.find({}, {"_id": 0}))
+        print(f"Retrieved {len(coins)} latest coins from MongoDB")
+        return coins
+    
+    except Exception as e:
+        print(f"Error retrieving coins: {str(e)}")
+        return []
 
 def get_coin_by_id(coin_id):
     """
