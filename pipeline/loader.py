@@ -15,12 +15,20 @@ def get_database():
     mongo_url = os.getenv("MONGO_URL")
     
     if not mongo_url:
-        raise ValueError("MONGO_URL not found in .env file")
+        print("MONGO_URL not found in .env file")
+        return None
     
-    client = MongoClient(mongo_url)
-    db = client["crypto_pipeline"]
-    print("Connected to MongoDB successfully")
-    return db
+    try:
+        client = MongoClient(mongo_url, serverSelectionTimeoutMS=5000)
+        #client = MongoClient(mongo_url)
+        client.server_info()
+        db = client["crypto_pipeline"]
+        print("Connected to MongoDB successfully")
+        return db
+
+    except Exception as e:
+        print(f"Could not connect to MongoDB: {str(e)}")
+        return None
 
 
 def save_raw_coins(coins):
