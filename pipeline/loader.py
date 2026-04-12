@@ -61,15 +61,22 @@ def save_processed_coins(coins):
     Save transformed/enriched coin data into processed_coins collection
     """
     db = get_database()
-    collection = db["processed_coins"]
+    if db is None:
+        print("Skipping save no database connection")
+        return
+    
+    try:
+        collection = db["processed_coins"]
+        timestamp = datetime.utcnow().isoformat()
+        for coin in coins:
+            coin["saved_at"] = timestamp
+        # Clear old data and insert fresh
+        #collection.delete_many({})
+        collection.insert_many(coins)
+        print(f"Saved {len(coins)} processed coins to MongoDB")
 
-    timestamp = datetime.utcnow().isoformat()
-    for coin in coins:
-        coin["saved_at"] = timestamp
-    # Clear old data and insert fresh
-    #collection.delete_many({})
-    collection.insert_many(coins)
-    print(f"Saved {len(coins)} processed coins to MongoDB")
+    except Exception as e:
+        print(f"Error saving processed coins: {str(e)}")
 
 
 def get_processed_coins():
