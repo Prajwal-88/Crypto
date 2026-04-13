@@ -1,5 +1,5 @@
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from pipeline.fetcher import fetch_coins
 from pipeline.transformer import transform_all
 from pipeline.loader import save_raw_coins, save_processed_coins, get_processed_coins, get_coin_by_id
@@ -38,7 +38,9 @@ def refresh():
     """
     try:
         # Step 1: Fetch raw data
-        raw_coins = fetch_coins()
+        #raw_coins = fetch_coins()
+        limit = request.args.get("limit", 20, type=int)
+        raw_coins = fetch_coins(per_page=limit)
 
         if not raw_coins:
             return jsonify({"status": "error", "message": "No data from CoinGecko"}), 500
