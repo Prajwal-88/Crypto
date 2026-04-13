@@ -12,6 +12,11 @@
     <!-- Header -->
     <div class="header">
         <h1>🪙 Crypto Analytics Dashboard</h1>
+        <select id="coinLimit">
+            <option value="10">Top 10 Coins</option>
+            <option value="20" selected>Top 20 Coins</option>
+            <option value="50">Top 50 Coins</option>
+        </select>
         <button id="refreshBtn" onclick="refreshData()">🔄 Refresh Data</button>
         <p id="statusMsg"></p>
         <p id="lastUpdated"></p>
@@ -98,7 +103,8 @@
             msg.innerText = "";
 
             try {
-                const res = await fetch("/api/refresh", { method: "POST" });
+                const limit = document.getElementById("coinLimit").value;
+                const res = await fetch(`/api/refresh?limit=${limit}`, { method: "POST" });
                 const data = await res.json();
                 msg.innerText = data.message;
                 msg.style.color = data.status === "success" ? "lightgreen" : "salmon";
