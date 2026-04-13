@@ -82,8 +82,14 @@ def transform_coin(coin):
     price_change_24h = coin.get("price_change_percentage_24h", 0)
 
     # Simulate 7 day prices using high/low range
-    high = coin.get("high_24h", current_price)
-    low = coin.get("low_24h", current_price)
+    #high = coin.get("high_24h", current_price)
+    #low = coin.get("low_24h", current_price)
+    high = coin.get("high_24h") or current_price
+    low = coin.get("low_24h") or current_price
+
+    high = float(high)
+    low = float(low)
+    current_price = float(current_price) if current_price else 0.0
     simulated_prices = [
         low, low * 1.01, current_price * 0.98,
         current_price, current_price * 1.01,
