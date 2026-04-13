@@ -1,4 +1,3 @@
-# app.py
 
 from flask import Flask, jsonify, render_template
 from pipeline.fetcher import fetch_coins
@@ -61,6 +60,18 @@ def refresh():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
+
+    except ConnectionError:
+        return jsonify({
+            "status": "error",
+            "message": "No internet connection please check your network"
+        }), 500
+    
+    except TimeoutError:
+        return jsonify({
+            "status": "error",
+            "message": "Request timed out CoinGecko took too long to respond"
+        }), 500
 
 
 @app.route("/api/coin/<coin_id>", methods=["GET"])
