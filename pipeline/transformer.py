@@ -64,6 +64,11 @@ def calculate_fear_index(price_change, volume_change_pct):
     Bonus Feature: Simple Fear Index
     If price drops and volume spikes = Fear
     """
+    if price_change is None:
+        price_change = 0
+    if volume_change_pct is None:
+        volume_change_pct = 0
+
     if price_change < 0 and volume_change_pct > 20:
         return "Fear"
     return "Calm"
