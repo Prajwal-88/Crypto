@@ -61,6 +61,22 @@ body {
     color: #aaaaaa;
 }
 
+#coinLimit {
+    background-color: #1a1a2e;
+    color: #ffffff;
+    border: 1px solid #f0b90b;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-right: 10px;
+    outline: none;
+}
+
+#coinLimit:hover {
+    background-color: #2a2a3d;
+}
+
 /* Stats Cards */
 .cards-container {
     display: flex;
