@@ -14,6 +14,7 @@
         <h1>🪙 Crypto Analytics Dashboard</h1>
         <button id="refreshBtn" onclick="refreshData()">🔄 Refresh Data</button>
         <p id="statusMsg"></p>
+        <p id="lastUpdated"></p>
     </div>
 
     <!-- Stats Cards -->
@@ -101,6 +102,9 @@
                 const data = await res.json();
                 msg.innerText = data.message;
                 msg.style.color = data.status === "success" ? "lightgreen" : "red";
+
+                const now = new Date();
+                document.getElementById("lastUpdated").innerText = `🕒 Last updated: ${now.toLocaleTimeString()}`;
                 await loadCoins();
             } catch (err) {
                 msg.innerText = "❌ Error refreshing data";

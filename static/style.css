@@ -55,6 +55,12 @@ body {
     font-size: 0.9rem;
 }
 
+#lastUpdated {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: #aaaaaa;
+}
+
 /* Stats Cards */
 .cards-container {
     display: flex;
