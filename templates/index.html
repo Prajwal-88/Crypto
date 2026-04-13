@@ -101,14 +101,24 @@
                 const res = await fetch("/api/refresh", { method: "POST" });
                 const data = await res.json();
                 msg.innerText = data.message;
-                msg.style.color = data.status === "success" ? "lightgreen" : "red";
+                msg.style.color = data.status === "success" ? "lightgreen" : "salmon";
+
+                if (data.status === "success") {
+                    setTimeout(() => {
+                        msg.innerText = "";
+                    }, 4000);
+                }
+
 
                 const now = new Date();
                 document.getElementById("lastUpdated").innerText = `🕒 Last updated: ${now.toLocaleTimeString()}`;
                 await loadCoins();
             } catch (err) {
-                msg.innerText = "❌ Error refreshing data";
-                msg.style.color = "red";
+                msg.innerText = "Could not refresh data please check your internet connection and try again";
+                msg.style.color = "salmon";
+                setTimeout(() => {
+                    msg.innerText = "";
+                }, 5000);
             }
 
             btn.disabled = false;
