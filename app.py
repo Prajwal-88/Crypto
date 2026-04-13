@@ -5,6 +5,7 @@ from pipeline.fetcher import fetch_coins
 from pipeline.transformer import transform_all
 from pipeline.loader import save_raw_coins, save_processed_coins, get_processed_coins, get_coin_by_id
 from dotenv import load_dotenv
+import traceback
 
 load_dotenv()
 
@@ -58,6 +59,7 @@ def refresh():
         })
 
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
