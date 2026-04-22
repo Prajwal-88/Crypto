@@ -44,4 +44,10 @@ Chart.js | Interactive charts on the frontend |
 Pytest | Unit and integration testing |
 Python Dotenv | Managing environment variables |
 
+## Use of AI
 
+Data Transformation
+AI helped refine and optimize some transformation logic, particularly in feature calculations such as volatility, moving averages, and momentum scoring.
+
+Frontend Development
+AI was used to assist in building and improving the frontend components, including chart integration and UI structure using Chart.js.
